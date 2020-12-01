@@ -11,6 +11,8 @@ import UIKit
 class ViewController: UIViewController,UIScrollViewDelegate {
 
     var scrollView: UIScrollView!
+    var animateLassoLayer: CAShapeLayer!
+    let opatic_red = UIColor(red: 255.0/255.0, green: 49.0/255.0, blue: 15.0/255.0, alpha: 122.0/255.0)
     
     var imageView: UIImageView!
     var imageViewbottom: UIImageView!
@@ -70,7 +72,6 @@ class ViewController: UIViewController,UIScrollViewDelegate {
         
         switch sender.state {
         case .began:
-            print("touched")
             let translation = sender.location(in: self.imageView)
             self.coords = []
             self.coords.append(translation)
@@ -92,19 +93,26 @@ class ViewController: UIViewController,UIScrollViewDelegate {
             imageView.image!.draw(at: CGPoint.zero)
             let context:CGContext = UIGraphicsGetCurrentContext()!;
             let a = create()
-//            let bez = UIBezierPath(ovalIn: CGRect(x:0,y:0, width: 50, height: 50))
-//            print(bez.isEmpty)
+            animateLassoLayer = CAShapeLayer()
+            animateLassoLayer.path = createForCAShapeLayer().cgPath
+            animateLassoLayer.fillColor = opatic_red.cgColor
+            imageView.layer.addSublayer(animateLassoLayer)
             context.addPath(a.cgPath)
-            print(context.isPathEmpty)
 //            context.clip();
+            
+            
+            //
             context.setBlendMode(.clear)
             context.setFillColor(UIColor.clear.cgColor)
             context.fillPath()
-                
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.animateLassoLayer.removeFromSuperlayer()
             let newImage:UIImage = UIGraphicsGetImageFromCurrentImageContext()!;
             UIGraphicsEndImageContext();
 
-             imageView.image = newImage
+            self.imageView.image = newImage
+        }
+            
         default:
             break
         }
@@ -112,28 +120,33 @@ class ViewController: UIViewController,UIScrollViewDelegate {
     
     func create()-> UIBezierPath{
             let path = UIBezierPath()
-            print("creating bezier")
-            //add check if in range of image container
-    //        if self.bounds.contains(self.coords[0]){
-    //            path.move(to: self.coords[0])
-    //        }
-            print("pre path")
             path.move(to: CGPoint(x:coords[0].x/widthDiv,y: coords[0].y/heightDiv))
-            print(coords[0])
-            print("post path")
+            
             for i in coords {
-    //            if self.bounds.contains(i){
-                print("moved cord")
-                    //path.addLine(to: i)
+    
                     path.addLine(to: CGPoint(x:i.x/widthDiv, y:i.y/heightDiv))
-    //            }
-    //            path.addLine(to: i)
+    
             }
             
             path.close()
-            //UIColor.red.set()
-            //UIColor.red.setFill()
-            //path.fill()
+            return path
+        }
+    
+    func createForCAShapeLayer()-> UIBezierPath{
+            let path = UIBezierPath()
+            print("creating bezier")
+            print("pre path")
+            path.move(to: CGPoint(x:coords[0].x,y: coords[0].y))
+            print(coords[0])
+            print("post path")
+            for i in coords {
+    
+                    path.addLine(to: CGPoint(x:i.x, y:i.y))
+    
+            }
+            
+            path.close()
+
             return path
         }
     
@@ -213,10 +226,6 @@ class ViewController: UIViewController,UIScrollViewDelegate {
         
     }
     
-    func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
-        let scaleAffineTransform = CGAffineTransform.identity.scaledBy(x: scale, y: scale)
-        scrollView.contentSize = self.imageView.bounds.size.applying(scaleAffineTransform)
-    }
     
     
     
